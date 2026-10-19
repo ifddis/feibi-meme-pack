@@ -143,7 +143,7 @@ def test_build_dedupe_gif_review_and_incremental(tmp_path):
         assert (out / name).read_bytes() == (repeat / name).read_bytes()
     with pytest.raises(ValueError, match="exists"):
         build(index, out, cache, offline=True)
-    metadata = json.loads((out / "semantic_metadata.json").read_text())
+    metadata = json.loads((out / "semantic_metadata.json").read_text("utf-8"))
     assert next(iter(metadata["images"].values()))["caption_status"] == "pending"
     files[0].write_bytes(image_bytes("GIF", color="green"))
     with pytest.raises(ValueError, match="Identity"):
@@ -158,11 +158,11 @@ def test_conflicting_duplicate_and_human_override(tmp_path):
     out = tmp_path / "pack"
     result = build(index, out, cache, offline=True, include_review=True)
     assert result["review_pending"] == 1
-    meta = json.loads((out / "semantic_metadata.json").read_text())
+    meta = json.loads((out / "semantic_metadata.json").read_text("utf-8"))
     assert next(iter(meta["images"].values()))["category"] == "review"
     override = {sha256(data): {"category": "happy", "caption": "人工确认：菲比开心微笑。"}}
     build(index, tmp_path / "reviewed", cache, offline=True, overrides=override)
-    meta = json.loads((tmp_path / "reviewed/semantic_metadata.json").read_text())
+    meta = json.loads((tmp_path / "reviewed/semantic_metadata.json").read_text("utf-8"))
     assert next(iter(meta["images"].values()))["caption_status"] == "done"
 
 
