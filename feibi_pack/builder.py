@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from PIL import Image
+import requests
 
 from .download import DEFAULT_INDEX, Downloader, source_url, write_json
 from .semantics import CATEGORIES, classify
@@ -42,6 +43,8 @@ def build(
     include_review=False,
     version="0.1.0",
     overrides=None,
+    skip_failed=False,
+    complete_name_captions=False,
 ):
     if workers < 1 or workers > 32 or (limit is not None and limit < 1):
         raise ValueError("workers must be 1..32 and limit must be positive")
@@ -82,16 +85,26 @@ def build(
     urls = list(dict.fromkeys(item["url"] for item in items))
 
     def fetch_to_cache(url):
-        data = download.fetch(url)
-        return sha256(data), cache / (sha256(url.encode()) + ".bin")
+        try:
+            data = download.fetch(url)
+            return sha256(data), cache / (sha256(url.encode()) + ".bin"), None
+        except (requests.RequestException, ValueError) as exc:
+            if not skip_failed:
+                raise
+            return None, None, str(exc)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         downloaded = dict(zip(urls, pool.map(fetch_to_cache, urls), strict=True))
     # Merge metadata before classification to flag contradictory duplicate titles.
     grouped = {}
+    failures = []
+    for url, (_, _, error) in downloaded.items():
+        if error:
+            failures.append({"url": url, "error": error, "stage": "download"})
     for item in items:
-        digest, _ = downloaded[item["url"]]
-        grouped.setdefault(digest, []).append(item)
+        digest, _, error = downloaded[item["url"]]
+        if not error:
+            grouped.setdefault(digest, []).append(item)
     output.parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=".feibi-stage-", dir=output.parent))
     try:
@@ -99,15 +112,27 @@ def build(
         records, reviews, provenance, categories = {}, [], [], set()
         for digest, aliases in sorted(grouped.items()):
             item = aliases[0]
-            _, cached_path = downloaded[item["url"]]
+            _, cached_path, _ = downloaded[item["url"]]
             data = cached_path.read_bytes()
             if sha256(data) != digest:
                 raise ValueError("Cached image changed during build")
-            with Image.open(io.BytesIO(data)) as image:
-                fmt = image.format
-                image.verify()
-            if fmt not in FORMATS:
-                raise ValueError(f"Unsupported image: {fmt}")
+            try:
+                with Image.open(io.BytesIO(data)) as image:
+                    fmt = image.format
+                    image.verify()
+                if fmt not in FORMATS:
+                    raise ValueError(f"Unsupported image: {fmt}")
+            except (OSError, SyntaxError, ValueError) as exc:
+                if not skip_failed:
+                    raise
+                failures.append(
+                    {
+                        "urls": sorted({a["url"] for a in aliases}),
+                        "error": str(exc),
+                        "stage": "image-validation",
+                    }
+                )
+                continue
             results = [classify(alias) for alias in aliases]
             category, caption, _ = results[0]
             if len({r[0] for r in results}) != 1:
@@ -139,7 +164,9 @@ def build(
                 "relative_path": relative,
                 "category": category,
                 "caption": caption,
-                "caption_status": "done" if human and category != "review" else "pending",
+                "caption_status": "done"
+                if (human or complete_name_captions) and category != "review"
+                else "pending",
                 "tags": sorted({tag for alias in aliases for tag in alias.get("tags", [])}),
                 "provenance": "人工覆盖" if human else "标题、文件名和标签规则推断；未视觉核验",
             }
@@ -163,6 +190,7 @@ def build(
             stage / "semantic_metadata.json",
             {"schema_version": "2.0", "pack_id": manifest["id"], "images": records},
         )
+        write_json(stage / "download_failures.json", failures)
         write_json(stage / "review_queue.json", reviews)
         write_json(stage / "provenance.json", provenance)
         (stage / "RIGHTS.md").write_text(
@@ -178,6 +206,7 @@ def build(
         return {
             **result,
             "review_pending": len(reviews),
+            "failed_assets": len(failures),
             "source_records": len(items),
             "unique_downloads": len(urls),
             "unique_contents": len(grouped),

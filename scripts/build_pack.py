@@ -26,6 +26,16 @@ def main():
         "--include-review", action="store_true", help="Include uncertain images in review category"
     )
     parser.add_argument("--overrides", type=Path, help="Human decisions keyed by content SHA-256")
+    parser.add_argument(
+        "--skip-failed",
+        action="store_true",
+        help="Record unavailable/invalid images and continue; default is strict",
+    )
+    parser.add_argument(
+        "--complete-name-captions",
+        action="store_true",
+        help="Accept explicit name-based captions as done; does not claim visual review",
+    )
     parser.add_argument("--version", default="0.1.0")
     args = vars(parser.parse_args())
     if args["overrides"]:

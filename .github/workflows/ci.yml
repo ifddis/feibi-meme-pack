@@ -25,4 +25,6 @@ jobs:
       - run: uv run --frozen pytest -q
       - name: Offline build and protocol validation with generated images
         run: uv run --frozen python scripts/smoke_fixture.py
+      - name: Validate installable repository root pack
+        run: uv run --frozen python scripts/validate_pack.py . --require-complete
       # Deliberately no download of upstream images or artifact upload.

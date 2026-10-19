@@ -9,6 +9,3 @@ dist/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
-/manifest.json
-/semantic_metadata.json
-/memes/
