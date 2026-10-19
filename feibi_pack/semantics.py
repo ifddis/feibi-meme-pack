@@ -1,44 +1,550 @@
-"""Conservative title/filename/tag rules; no visual recognition is claimed."""
+"""Classify source names by their meaning, without inventing visual details."""
 
 import re
+import unicodedata
 from pathlib import PurePosixPath
 from urllib.parse import unquote, urlsplit
 
 CATEGORIES = {
     "hissing": "哈气、表达不满或威慑。",
-    "punching": "乱拳、挥拳或连续出拳。",
-    "angry": "生气、愤怒或恼火。",
-    "cake": "吃蛋糕。",
-    "happy": "开心、高兴或欢呼。",
-    "aggrieved": "委屈、难过或哭泣。",
+    "punching": "乱拳、挥拳、拳击或出拳。",
+    "angry": "生气、愤怒、红温或气鼓鼓。",
+    "cake": "名称明确为吃蛋糕的表情。",
+    "happy": "开心、欢笑、满足或幸福。",
+    "aggrieved": "委屈、哭泣、失望、受欺负或失落。",
     "shy": "害羞、脸红或不好意思。",
-    "dancing": "跳舞或摇摆。",
-    "review": "语义未知、冲突或含否定表达，等待人工审核。",
+    "dancing": "跳舞、蹦迪、扭动或舞蹈动作。",
+    "eating": "吃饭、嗦面、吃零食或表达食欲。",
+    "gossip": "吃瓜、围观或关注群聊动态。",
+    "drinking": "喝饮料、干杯或调酒。",
+    "cooking": "做菜、炒粉、制作食物。",
+    "sleeping": "睡觉、困倦、赖床或失眠。",
+    "waking": "叫醒、起床或要求不要继续睡觉。",
+    "confused": "疑惑、问号、不知道或不理解对方。",
+    "surprised": "吃惊、震惊、目瞪口呆或不敢相信。",
+    "thinking": "思考或考虑问题。",
+    "speechless": "无语、摊手、尴尬或不知道如何回应。",
+    "approval": "同意、肯定、点赞或称赞。",
+    "refusal": "拒绝、否认、摇头或表示不可以。",
+    "apology": "道歉、认错或承认搞砸了。",
+    "affection": "喜欢、想念、比心、拥抱、亲昵或安慰。",
+    "pleading": "恳求、拜托、求饶或希望对方答应。",
+    "greeting": "问候、欢迎、登场或敬礼。",
+    "goodnight": "晚安、告别或结束聊天。",
+    "celebration": "节日祝福、拜年、发财或庆祝。",
+    "encouragement": "努力、拼尽全力、加油或应援。",
+    "proud": "得意、炫耀、自夸或自信。",
+    "mocking": "嘲笑、奸笑、鄙视、嫌弃或调侃。",
+    "scolding": "责备、质问、要求住口或赶走对方。",
+    "cute": "卖萌、乖巧、可爱、眨眼或鬼脸。",
+    "watching": "盯着、探头、偷窥、看手机、看书或观察。",
+    "interaction": "摸头、戳脸、捏脸、敲打或互动动作。",
+    "combat": "攻击、踢打、挥舞武器或功夫动作。",
+    "sports": "打球、跑步、锻炼或运动。",
+    "spinning": "转圈、旋转、回旋或转晕。",
+    "music": "演奏、敲鼓、摇滚、乐队或 DJ。",
+    "gaming": "玩游戏、抽卡、上号、打牌或麻将。",
+    "smoking": "抽烟、吸烟、吐烟或点烟。",
+    "relaxed": "摆烂、慵懒、躺着或放松。",
+    "dizzy": "晕眩、晕倒、气晕或受不了。",
+    "disgust": "呕吐、口吐彩虹、异味或不适。",
+    "surrender": "投降、认输或战败。",
+    "waiting": "等待、期待或在车站等人。",
+    "pose": "坐姿、托腮、叉腰、证件照或其他明确姿态。",
+    "review": "名称含糊、线索冲突或无法确定语义，等待人工审核。",
 }
+
+# Phrases are read as meaning-bearing names, not an image recognition result.
 RULES = {
     "hissing": ("哈气",),
-    "punching": ("乱拳", "挥拳", "出拳"),
-    "angry": ("生气", "愤怒", "恼火"),
-    "cake": ("吃蛋糕",),
-    "happy": ("开心", "高兴", "欢呼"),
-    "aggrieved": ("委屈", "难过", "哭泣"),
-    "shy": ("害羞", "脸红", "不好意思"),
-    "dancing": ("跳舞", "摇摆"),
+    "punching": (
+        "乱拳",
+        "疯拳",
+        "挥拳",
+        "出拳",
+        "小拳拳",
+        "拳击",
+        "左勾拳",
+        "看拳",
+        "比划拳头",
+        "炎拳",
+    ),
+    "angry": ("生气", "愤怒", "恼火", "暴怒", "红温", "气鼓鼓", "黑脸", "不爽"),
+    "cake": ("吃蛋糕", "炫蛋糕"),
+    "happy": (
+        "开心",
+        "高兴",
+        "欢呼",
+        "欢笑",
+        "大笑",
+        "傻笑",
+        "笑死",
+        "幸福",
+        "满足",
+        "太爽",
+        "好诶",
+        "雀跃",
+        "激动",
+        "欸嘿",
+        "嘿嘿",
+        "嘻嘻",
+        "哦耶",
+    ),
+    "aggrieved": (
+        "委屈",
+        "难过",
+        "哭",
+        "呜呜",
+        "呜哇",
+        "呜太过分",
+        "可怜",
+        "失望",
+        "失去了一切",
+        "被抛弃",
+        "欺负",
+        "大世界有坏人",
+        "生无可恋",
+        "心态就崩",
+    ),
+    "shy": ("害羞", "脸红", "不好意思", "不好意柿"),
+    "dancing": ("跳舞", "蹦迪", "竞舞", "扭扭", "扭动", "花手摇", "鳄鱼扭"),
+    "eating": (
+        "吃吃",
+        "吃大福",
+        "干饭",
+        "炫饭",
+        "嗦面",
+        "吃面",
+        "炫面",
+        "吃火锅",
+        "吃汉堡",
+        "偷吃",
+        "吃月饼",
+        "吃薯条",
+        "吃暑条",
+        "吃糖",
+        "吃什么",
+        "贪吃",
+        "好馋",
+        "流口水",
+        "吸溜",
+        "真是美味",
+        "尝一口",
+        "投喂",
+        "大胃袋",
+        "分汉堡",
+    ),
+    "gossip": ("吃瓜", "群友又有新表情包", "日常巡查", "围观"),
+    "drinking": ("干杯", "调酒", "喝水", "喝茶", "喝咖啡", "喝可乐"),
+    "cooking": ("做菜", "炒粉", "煎饼果子", "打年糕"),
+    "sleeping": (
+        "睡觉",
+        "睡大觉",
+        "昏睡",
+        "赖床",
+        "懒床",
+        "再睡五分钟",
+        "打困",
+        "熬夜",
+        "失眠",
+        "被窝暖烘烘",
+    ),
+    "waking": ("别睡了", "不许睡觉", "不睡了", "该起床"),
+    "confused": (
+        "疑惑",
+        "疑问",
+        "问号",
+        "何意味",
+        "你说啥",
+        "说什么呢",
+        "在说什么",
+        "不知道",
+        "看不懂",
+        "是这样吗",
+        "什么?",
+        "什么？",
+        "这是真的吗",
+        "为什么",
+        "难道说",
+        "好奇怪",
+        "怎么会这样",
+        "怎么这样",
+        "那咋办",
+        "怎么没人",
+        "挠头",
+    ),
+    "surprised": (
+        "惊讶",
+        "震惊",
+        "吃惊",
+        "目瞪口呆",
+        "我的天",
+        "不敢相信",
+        "哇噢",
+        "哇哦",
+        "哇!!",
+        "哇啊",
+        "好可怕",
+        "骗人",
+    ),
+    "thinking": ("思考", "考虑"),
+    "speechless": (
+        "无语",
+        "摊手",
+        "啊这",
+        "呃",
+        "尴尬",
+        "目光呆滞",
+        "呆呆",
+        "呆菲",
+        "阿巴",
+        "没的说",
+    ),
+    "approval": (
+        "点赞",
+        "点头",
+        "赞成",
+        "超赞",
+        "你说的对",
+        "答对",
+        "是这样没错",
+        "没问题",
+        "不错",
+        "不赖",
+        "原来如此",
+        "原来这样",
+        "千真万确",
+        "完美",
+        "大佬",
+        "崇拜",
+        "太尊",
+        "神了",
+        "牛逼",
+        "好厉害",
+        "最棒",
+        "就这个",
+        "就是这个",
+        "上道",
+        "绝对有可能",
+    ),
+    "refusal": (
+        "不对",
+        "不是这样",
+        "不怎么样",
+        "不行",
+        "不可能",
+        "想都别想",
+        "做不到",
+        "摇头",
+        "我没有",
+        "我沒有",
+        "不准哈",
+        "拒绝",
+        "不敢说",
+    ),
+    "apology": ("抱歉", "道歉", "我错了", "搞砸了", "我可是无辜", "是我做的太过"),
+    "affection": (
+        "抱抱",
+        "比心",
+        "爱你",
+        "喜欢呀",
+        "想你",
+        "送花",
+        "摸摸头",
+        "摸摸菲比",
+        "舔舔",
+        "舔你",
+        "我还有你",
+        "你是我的了",
+        "咬耳朵",
+    ),
+    "pleading": ("恳求", "求饶", "求求", "拜托", "就给我看一次", "人家就想要", "给我也整一个"),
+    "greeting": ("欢迎", "登场", "登場", "来啦", "敬礼", "问好"),
+    "goodnight": ("晚安", "再见", "走吧"),
+    "celebration": (
+        "拜年",
+        "新年快乐",
+        "新年快樂",
+        "中秋快乐",
+        "中秋节快乐",
+        "恭喜发财",
+        "接财神",
+        "接財神",
+        "发大财",
+    ),
+    "encouragement": ("努力", "拼尽全力", "加油", "拉拉队"),
+    "proud": ("得意", "炫耀", "我真棒", "不愧是我", "我可是专业", "我有點厲害", "装比", "可以称帝"),
+    "mocking": (
+        "嘲笑",
+        "招笑",
+        "糖笑",
+        "奸笑",
+        "腹黑笑",
+        "看扁",
+        "就这水平",
+        "就这点程度",
+        "和低端玩家聊不来",
+        "就这呀",
+        "这期拉了",
+        "有点拉了",
+        "嫌弃",
+    ),
+    "scolding": (
+        "住口",
+        "滚出去",
+        "出去合集",
+        "库狗出去",
+        "原批出去",
+        "你是坏蛋",
+        "你怎么这么坏",
+        "你真的太坏",
+        "你这恶魔",
+        "你这无礼",
+        "你疯了吗",
+        "没礼貌",
+        "你能负责",
+        "再发找人",
+        "找人弄你",
+        "说不来",
+        "不说下去",
+        "你别找",
+    ),
+    "cute": ("卖萌", "可爱", "乖巧", "wink", "眨眼", "鬼脸", "吐舌", "剪刀手", "比ya"),
+    "watching": ("盯", "偷窥", "探头", "看手机", "看书", "看看啊", "我倒要看看", "戳屏"),
+    "interaction": (
+        "捏脸",
+        "捏捏",
+        "戳脸",
+        "敲敲",
+        "敲打",
+        "打菲比头",
+        "揪揪",
+        "拍肚皮",
+        "扇耳光",
+        "捶打",
+        "捶你",
+    ),
+    "combat": (
+        "功夫",
+        "太极",
+        "吃我一击",
+        "踢",
+        "猛攻",
+        "鲨咬",
+        "舞枪",
+        "枪指",
+        "背刺",
+        "御剑",
+        "剑仙",
+        "盖帽螺旋丸",
+    ),
+    "sports": ("打篮球", "打球", "踢球", "上篮", "棒球", "跑步", "锻炼", "俯卧撑"),
+    "spinning": ("转圈", "旋转", "大回旋", "转晕"),
+    "music": ("敲鼓", "节拍", "乐队", "摇滚", "dj菲比"),
+    "gaming": (
+        "玩游戏",
+        "玩点游戏",
+        "上号",
+        "晒卡",
+        "抽卡",
+        "打牌",
+        "麻将",
+        "验牌",
+        "牌有问题",
+        "牌没问题",
+        "玩了一天",
+        "鸣潮启动",
+        "启动鸣潮",
+        "王者荣耀启动",
+        "开始逆战",
+        "开始洛克王国",
+        "攒够一万",
+        "打深塔",
+    ),
+    "smoking": ("吸烟", "抽烟", "吐烟", "点烟"),
+    "relaxed": ("摆烂", "慵懒", "躺躺"),
+    "dizzy": ("我晕", "气晕", "转晕", "晕了"),
+    "disgust": ("口吐彩虹", "呕", "何异味", "有股味", "臭臭"),
+    "surrender": ("投降", "战败", "认输"),
+    "waiting": ("期待", "等你", "等待"),
+    "pose": ("坐姿", "托腮", "叉腰", "证件照", "大头照", "仰视", "我坐好了", "是坐好了"),
 }
+
+# Additional literal name meanings, kept separate from inferred emotions.
+CATEGORIES.update(
+    {
+        "finance": "股价、涨跌、加仓、交易或金钱相关回应。",
+        "allegiance": "以标题文字表达效忠、支持某个组织或阵营。",
+        "request": "索取、催促、邀请或要求对方采取行动。",
+        "mischief": "坏点子、搞破坏、恶作剧或捣乱。",
+        "injured": "被电、被烧、被炸、受伤或遇险。",
+        "trapped": "坐牢、被绑、被包围或无法脱身。",
+        "daily": "洗澡、吹风、散步等名称明确的日常活动。",
+        "working": "上班、加班、工作完成或制作内容。",
+        "magic": "魔术、魔法或标题明确的奇幻动作。",
+        "prayer": "祈祷、磕头或祝愿。",
+        "playful": "玩积木、荡秋千、玩耍或装傻。",
+    }
+)
+RULES.update(
+    {
+        "finance": (
+            "纳斯达克",
+            "拉k線",
+            "暴涨",
+            "浮盈",
+            "加仓",
+            "砸盘",
+            "跌停",
+            "炒股",
+            "扣完了",
+            "赚钱",
+            "-648",
+            "好人股",
+        ),
+        "allegiance": ("誓死效忠",),
+        "request": (
+            "拿来",
+            "给我一个",
+            "都给我",
+            "给我做",
+            "快点选",
+            "过来啦",
+            "兄弟你来",
+            "来吧来吧",
+            "来呀",
+            "要钱",
+            "交出来",
+            "借根线",
+            "快过来",
+            "请开始表演",
+        ),
+        "mischief": ("坏点子", "搞破坏", "恶霸", "邪惡", "做的局"),
+        "injured": ("被电", "电焦", "淹水", "火烧", "被刀", "被炸", "中招了"),
+        "trapped": ("坐牢", "捆绑", "被控制", "被群友包围", "绑架"),
+        "daily": ("洗澡", "吹电风扇", "遛狗", "游街", "巡街"),
+        "working": ("上班", "加班", "干活", "干完了", "开始comfyui", "织线"),
+        "magic": ("魔术", "魔法少女", "创造世界"),
+        "prayer": ("祈祷", "磕头"),
+        "playful": ("玩积木", "荡秋千", "装傻"),
+    }
+)
+RULES["aggrieved"] += ("好过分", "苦命鸳鸯", "又不带我", "你们背叛", "背叛了我")
+RULES["watching"] += ("偷玩手机", "凝视", "也看看", "猫眼看")
+RULES["confused"] += ("你在干什么", "什么叫", "什么管理员", "奇怪", "所以呢")
+RULES["approval"] += ("不简单", "高手可以", "可以的")
+RULES["refusal"] += ("想得美",)
+RULES["speechless"] += ("又开始了", "有点没劲", "太勉强", "不说话")
+RULES["mocking"] += ("竖中指", "中指菲比", "你能把我怎么样", "那咋了", "老库拉了")
+RULES["scolding"] += (
+    "黑子說話",
+    "正在说话",
+    "人家正在",
+    "写节点图的出去",
+    "无权来质问",
+    "你这个月评分",
+    "差劲呢",
+)
+RULES["sleeping"] += ("大懒猪", "掀被子")
+RULES["celebration"] += ("圣诞", "财神", "紅包")
+RULES["waiting"] += ("两眼放光", "星星眼", "大的要来了")
+RULES["gaming"] += ("玩终末地", "十连", "零提升", "0提升", "试玩失败", "绝密跑刀", "os u")
+RULES["sports"] += ("蹦跶", "跳楼梯")
+RULES["combat"] += ("转机枪", "冲锋", "冲天暴击")
+
+# A more precise name wins over a generic implication, not over an unrelated action.
+DOMINATES = {
+    "cake": {"eating"},
+    "waking": {"sleeping"},
+    "goodnight": {"sleeping"},
+    "hissing": {"angry"},
+    "punching": {"combat"},
+    "sports": {"combat"},
+    "mocking": {"happy", "approval"},
+    "celebration": {"happy"},
+    "apology": {"pleading", "aggrieved"},
+    "pleading": {"affection"},
+    "affection": {"interaction", "cute"},
+    "gaming": {"approval"},
+    "dizzy": {"angry", "spinning"},
+    "gossip": {"watching"},
+    "cute": {"happy", "approval", "confused"},
+    "angry": {"confused"},
+    "confused": {"watching"},
+    "spinning": {"happy"},
+    "allegiance": {"finance"},
+    "working": {"trapped"},
+    "proud": {"happy", "approval"},
+    "scolding": {"confused"},
+}
+NEGATED_ACTION = re.compile(
+    r"(?:不能|不再|不会|不想|没在|没有|并非|禁止|别|不)(?:哈气|开心|生气|哭|跳舞|吃蛋糕|乱拳|睡觉)"
+)
+EXACT = {
+    "早": "greeting",
+    "奇怪": "confused",
+    "ok": "approval",
+    "o而k之": "approval",
+    "赞": "approval",
+    "no!no!": "refusal",
+    "no!no": "refusal",
+    "mj": "dancing",
+    "哦吼吼吼": "happy",
+    "哦对了": "thinking",
+    "哼": "angry",
+    "哈?": "confused",
+    "啊?": "confused",
+    "啥": "confused",
+    "啥。。": "confused",
+    "嗯?": "confused",
+    "?": "confused",
+    "呜欸欸-??": "confused",
+    "呜欸欸": "aggrieved",
+    "啾": "affection",
+    "嘻": "happy",
+    "(^ω^)": "happy",
+    "心": "affection",
+    "晕": "dizzy",
+}
+
+
+def normalized(value):
+    text = unicodedata.normalize("NFKC", value).casefold().strip()
+    return re.sub(r"(?:_\d+|\s*\(\d+\)|\d+)$", "", text).strip()
 
 
 def classify(item):
     title = item.get("title", "")
     filename = PurePosixPath(unquote(urlsplit(item["url"]).path)).stem
-    tags = item.get("tags", [])
-    text = " ".join([title, filename, *tags]).casefold()
-    hits = {key for key, words in RULES.items() if any(word in text for word in words)}
-    # Even a single match is uncertain when the source negates/contrasts an action.
-    uncertain = re.search(r"不|没|无|别|禁止|并非|不是|not\b|never\b", text)
-    category = next(iter(hits)) if len(hits) == 1 and not uncertain else "review"
+    names = [normalized(value) for value in [title, filename, *item.get("tags", [])]]
+    hits = {
+        key
+        for key, words in RULES.items()
+        if any(word.casefold() in text for word in words for text in names)
+    }
+    for text in names:
+        short = re.sub(r"(?:菲比|肥比|啾比|丘比)", "", text).strip("!。 ")
+        if short in EXACT:
+            hits.add(EXACT[short])
+        if re.fullmatch(r"[?]+", short):
+            hits.add("confused")
+        if re.fullmatch(r"(?:啊)?哈哈+", short):
+            hits.add("happy")
+    candidates = set(hits)
+    for specific, generic in DOMINATES.items():
+        if specific in hits:
+            candidates -= generic
+    negated = any(NEGATED_ACTION.search(text) for text in names)
+    # Explicit wake-up requests are meaningful names despite negating sleep.
+    if "waking" in candidates:
+        negated = False
+    category = next(iter(candidates)) if len(candidates) == 1 and not negated else "review"
     caption = (
         ""
         if category == "review"
-        else (f"源标题：{title or filename}；文字线索推断：{CATEGORIES[category]}（未作视觉核验）")
+        else (
+            f"源名称：{title or filename}；含义：{CATEGORIES[category]}"
+            "（依据名称归类，未补写画面细节）"
+        )
     )
-    return category, caption, sorted(hits)
+    return category, caption, sorted(candidates)

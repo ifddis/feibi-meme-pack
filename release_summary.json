@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "upstream_index_sha256": "bfc2605439e9e9dae531c5919712919deb01a2ecead9efd4444ba875492db502",
+  "source_records": 1139,
+  "published_images": 675,
+  "published_categories": 55,
+  "review_pending": 443,
+  "failed_assets": 4,
+  "image_bytes": 363510352,
+  "caption_basis": "原始名称、文件名和标签语义；不是视觉核验"
+}

@@ -1,8 +1,32 @@
 # 菲比丘比 AstrBot 表情包构建器
 
-为 AstrBot meme_manager 构建本地内容包的 Python 3.12 工具。**本仓库不是 AstrBot 插件，也没有内置第三方图片。**
-默认输出 `build/pack/`，不覆盖仓库根目录或已有输出；图片、缓存和输出均被 Git 忽略。
-素材来源：[Phoebe-Hub](https://github.com/Kato-Shoko705/Phoebe-Hub)。再分发许可尚未确认，见 [RIGHTS.md](RIGHTS.md)。
+仓库根目录是可供 AstrBot meme_manager 从 GitHub 安装的菲比丘比内容包，同时保留 Python 3.12/uv 构建工具。它不是 AstrBot Python 插件。
+维护者已确认本次发布素材的再分发授权，记录见 [RIGHTS.md](RIGHTS.md)。
+
+## 在表情包管理器中安装
+
+在截图所示的“从 GitHub 安装”中填写：
+
+| 字段 | 内容 |
+| --- | --- |
+| GitHub 仓库 | `ifddis/feibi-meme-pack` |
+| 分支或版本 | 本发布 PR 合并后使用 `main`；合并前使用 `feat/publish-installable-pack` |
+| 包所在目录 | `.` |
+
+`manifest.json`、`memes/`、`semantic_metadata.json` 现在直接位于仓库根目录，
+不需要在 AstrBot 服务器上运行 Python 构建脚本。安装旧 main 提示“缺少 manifest.json”时，
+应使用已含实际内容包的发布分支或等待发布 PR 合并，不能只修改目录参数。
+
+分类以图片原始名称为主要线索，例如“哭哭/呜呜”归哭泣、“小拳拳/左勾拳”归出拳、
+“干饭/炫面”归进食、“不好意思”归害羞、“扭扭/蹦迪”归舞蹈。
+只发布名称语义可判定且文件有效的图片；“未命名”“菲比”“猫和老鼠系列”等
+无法给出具体行为的名称保留待审核，不强行归为开心或生气。
+当前版本发布 **675 张图片、55 个分类**，原始图片约 **347 MiB**。
+443 张名称含糊的图片仍待审核，3 个失效链接和 1 个不可识别文件未发布；
+完整计数见 `release_summary.json`。全部分类、逐图来源、下载失败及待审核记录随本包提供。
+
+本地重新构建仍默认输出 `build/pack/`，不覆盖现有目录；缓存和本地构建保持 Git 忽略。
+上游：[Phoebe-Hub](https://github.com/Kato-Shoko705/Phoebe-Hub)。
 
 ## 快速开始：Windows PowerShell / uv
 
@@ -36,6 +60,7 @@ build/first-review/
   semantic_metadata.json
   provenance.json
   review_queue.json
+  download_failures.json
   RIGHTS.md
 ```
 
@@ -56,7 +81,7 @@ entry_id = SHA256(UTF8(content_sha256 + "\0" + category + "\0" + relative_path))
 符号链接逃逸、包 ID、内容摘要、记录键和 entry_id；`--require-complete` 额外要求逐图完整覆盖。
 基础协议允许部分/没有语义元数据，普通校验保留该兼容性。
 未生成 icon/previews，它们在协议中可选。没有添加不存在的 GitHub 内容包来源字段；
-构建工具仓库当前不能直接作为已发布内容包导入。
+仓库根目录的发布包可直接导入；本地构建目录只有在单独提交发布后才可作为 GitHub 来源。
 
 ## 语义推断与人工审核
 
@@ -76,9 +101,13 @@ entry_id = SHA256(UTF8(content_sha256 + "\0" + category + "\0" + relative_path))
 | review | 无明确线索、多种分类冲突或否定表达 |
 
 规则是保守的文字推断，无法保证画面内容准确，没有使用视觉模型或伪造 OCR。
-自动 caption 明示推断依据，`caption_status` 保持 `pending`；未知 caption 留空。
+自动 caption 引用原名称并说明含义，不补写图中未验证的细节。默认 `caption_status` 为 `pending`；
+本次发布按维护者要求以名称语义为依据，使用 `--complete-name-captions` 将明确的名称描述标为 `done`。
+这表示文字描述已生成，不代表视觉人工核验。未知 caption 留空。
 同一内容不同来源的元数据先合并，分类冲突进入 review，避免下载顺序决定分类。
-哈气等行为不会自动泛化为“生气”。同一图片只导出一次，来源别名保存在 `provenance.json`。
+哈气等行为不会自动泛化为“生气”。更具体的行为优先于泛化线索：
+“吃蛋糕”优先于进食，“小拳拳”优先于攻击；“不许睡觉”是叫醒，
+“我不能哈气了”不会误归哈气。不会因“打麻将哈哈”含“哈哈”就误归笑脸。同一图片只导出一次，来源别名保存在 `provenance.json`。
 
 查看 `review_queue.json`、`provenance.json` 及本地原图后，以内容 SHA-256 为键建立覆盖文件：
 
@@ -96,7 +125,8 @@ uv run --frozen python scripts/build_pack.py --offline --overrides review.json -
 uv run --frozen python scripts/validate_pack.py build/reviewed --require-complete
 ```
 
-仅人工覆盖的非 review 记录标记 `done`。覆盖允许使用上表分类，不允许自定义路径；
+人工覆盖的非 review 记录标记 `done`；显式使用 `--complete-name-captions` 也可确认名称描述完成。
+覆盖允许使用 `CATEGORIES` 中的分类（除上表外还有吃饭、拥抱、点赞、拒绝、困倦、问号等），不允许自定义路径；
 覆盖不会修改版权状态。`review.json` 请放在本地受控目录，不要包含私人信息。
 
 ## 下载、缓存和增量同步
@@ -117,13 +147,28 @@ uv run --frozen python scripts/build_pack.py --index C:/data/memes.json --limit 
 索引 `pending` 不导入。不同 URL 并发下载（默认 6，`--workers 1..32`），相同 URL 只下载一次，
 内容 SHA-256 去重。整个图库不驻留内存，仅当前并发响应和当前处理图片占用内存。
 每个响应上限 25 MB，连接/读取超时为 10/45 秒；连接故障、超时、429 和常见 5xx 最多重试 3 次，
-指数退避；404 等永久错误不重试。失败构建不会留下半成品输出，已完成下载缓存可复用。
+指数退避；404 等永久错误不重试。默认严格模式遇到下载/图片校验失败会终止，不留下半成品输出；已完成缓存可复用。
+上游索引可能有 404 链接。显式使用 `--skip-failed` 可继续处理有效图片，
+失败 URL 和原因写入 `download_failures.json`，结果中的 `failed_assets` 不会计入可用图片。
 不支持多个进程同时写同一缓存目录；并行任务应指定不同 `--cache`。
 
 只允许 HTTPS 和显式允许的上游主机，拒绝重定向、外部任意地址、用户信息、异常端口、路径穿越；
 不使用标题拼接输出路径。输出文件名使用内容摘要，兼容 Windows；不解码再编码图片，
 原样保留 GIF/WebP 动画及 PNG/JPEG 字节。输出路径已存在即失败，应使用新的版本目录，
 不会自动删除旧文件或修改 AstrBot 现有配置。缓存目录不应放在输出目录内。
+
+## 重新构建本次发布素材
+
+`sources/published-index.json` 记录实际发布图片的上游索引条目，不混入未知名称或失败文件。
+
+```powershell
+uv run --frozen python scripts/build_pack.py --index sources/published-index.json --complete-name-captions --output build/rebuilt-release
+uv run --frozen python scripts/validate_pack.py build/rebuilt-release --require-complete
+```
+
+此命令生成新的本地目录，不直接改写根目录发布包。根目录的 manifest 另包含本仓库来源和
+本次确认的许可记录。`provenance.json` 保留原名、标签和逐图内容哈希；
+`sources/review_candidates.json` 列出未发布候选；`download_failures.json` 记录本次同步失败。
 
 ## 开发与 CI
 
@@ -136,7 +181,7 @@ uv run --frozen python scripts/smoke_fixture.py
 ```
 
 `uv.lock` 固定依赖，`requirements.txt` 提供非 uv 用户的运行时依赖范围。
-GitHub Actions 在 Ubuntu 和 Windows 上执行同样的测试及离线 CLI 构建/校验。
+GitHub Actions 在 Ubuntu 和 Windows 上执行同样的测试、离线 CLI 构建，以及仓库根目录实际发布包的完整校验。
 不下载上游图库、不上传素材构件、不配置第三方 API 凭据，不自动公开发布。
 测试覆盖协议身份、内容篡改、缓存刷新与损坏、重试、格式/GIF、去重、未知/冲突语义、
 路径安全和重复构建。云环境若 uv 默认缓存只读，可设置 `UV_CACHE_DIR` 到可写目录。
@@ -153,7 +198,7 @@ GitHub Actions 在 Ubuntu 和 Windows 上执行同样的测试及离线 CLI 构�
 4. 检查包 ID、分类显示、GIF 动画、语义检索，再测试 QQ 实际发送。
 5. 记录 AstrBot 和 meme_manager 版本、导入方式及结果。未执行这些步骤前，不宣称集成成功。
 
-若最终使用 GitHub 导入，必须先得到图片再分发授权，再在单独审核流程中发布真正的内容包；
-导入参数应指向那个已发布包的仓库、ref 和包根目录，不能直接使用当前构建工具仓库。
+本次发布包已按维护者确认的再分发授权提交，可使用文首 GitHub 参数安装。
+后续新增来源或授权范围之外的素材仍应单独确认。协议校验及本次名称归类不替代真实 AstrBot 集成验证。
 
 实际本地及 Windows/Ubuntu CI 验证结果、已知上游示例问题见 [VALIDATION.md](VALIDATION.md)。

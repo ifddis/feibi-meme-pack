@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "id": "ifddis.feibi-chibi",
+  "name": "菲比丘比",
+  "version": "0.1.0",
+  "description": "按原始名称语义分类的菲比丘比表情包；本次图片再分发授权已由维护者确认。",
+  "license": "Redistribution permission confirmed by repository maintainer; see RIGHTS.md",
+  "categories": {
+    "affection": {
+      "description": "喜欢、想念、比心、拥抱、亲昵或安慰。"
+    },
+    "aggrieved": {
+      "description": "委屈、哭泣、失望、受欺负或失落。"
+    },
+    "allegiance": {
+      "description": "以标题文字表达效忠、支持某个组织或阵营。"
+    },
+    "angry": {
+      "description": "生气、愤怒、红温或气鼓鼓。"
+    },
+    "apology": {
+      "description": "道歉、认错或承认搞砸了。"
+    },
+    "approval": {
+      "description": "同意、肯定、点赞或称赞。"
+    },
+    "celebration": {
+      "description": "节日祝福、拜年、发财或庆祝。"
+    },
+    "combat": {
+      "description": "攻击、踢打、挥舞武器或功夫动作。"
+    },
+    "confused": {
+      "description": "疑惑、问号、不知道或不理解对方。"
+    },
+    "cooking": {
+      "description": "做菜、炒粉、制作食物。"
+    },
+    "cute": {
+      "description": "卖萌、乖巧、可爱、眨眼或鬼脸。"
+    },
+    "daily": {
+      "description": "洗澡、吹风、散步等名称明确的日常活动。"
+    },
+    "dancing": {
+      "description": "跳舞、蹦迪、扭动或舞蹈动作。"
+    },
+    "disgust": {
+      "description": "呕吐、口吐彩虹、异味或不适。"
+    },
+    "dizzy": {
+      "description": "晕眩、晕倒、气晕或受不了。"
+    },
+    "drinking": {
+      "description": "喝饮料、干杯或调酒。"
+    },
+    "eating": {
+      "description": "吃饭、嗦面、吃零食或表达食欲。"
+    },
+    "encouragement": {
+      "description": "努力、拼尽全力、加油或应援。"
+    },
+    "finance": {
+      "description": "股价、涨跌、加仓、交易或金钱相关回应。"
+    },
+    "gaming": {
+      "description": "玩游戏、抽卡、上号、打牌或麻将。"
+    },
+    "goodnight": {
+      "description": "晚安、告别或结束聊天。"
+    },
+    "gossip": {
+      "description": "吃瓜、围观或关注群聊动态。"
+    },
+    "greeting": {
+      "description": "问候、欢迎、登场或敬礼。"
+    },
+    "happy": {
+      "description": "开心、欢笑、满足或幸福。"
+    },
+    "hissing": {
+      "description": "哈气、表达不满或威慑。"
+    },
+    "injured": {
+      "description": "被电、被烧、被炸、受伤或遇险。"
+    },
+    "interaction": {
+      "description": "摸头、戳脸、捏脸、敲打或互动动作。"
+    },
+    "magic": {
+      "description": "魔术、魔法或标题明确的奇幻动作。"
+    },
+    "mischief": {
+      "description": "坏点子、搞破坏、恶作剧或捣乱。"
+    },
+    "mocking": {
+      "description": "嘲笑、奸笑、鄙视、嫌弃或调侃。"
+    },
+    "music": {
+      "description": "演奏、敲鼓、摇滚、乐队或 DJ。"
+    },
+    "playful": {
+      "description": "玩积木、荡秋千、玩耍或装傻。"
+    },
+    "pleading": {
+      "description": "恳求、拜托、求饶或希望对方答应。"
+    },
+    "pose": {
+      "description": "坐姿、托腮、叉腰、证件照或其他明确姿态。"
+    },
+    "prayer": {
+      "description": "祈祷、磕头或祝愿。"
+    },
+    "proud": {
+      "description": "得意、炫耀、自夸或自信。"
+    },
+    "punching": {
+      "description": "乱拳、挥拳、拳击或出拳。"
+    },
+    "refusal": {
+      "description": "拒绝、否认、摇头或表示不可以。"
+    },
+    "relaxed": {
+      "description": "摆烂、慵懒、躺着或放松。"
+    },
+    "request": {
+      "description": "索取、催促、邀请或要求对方采取行动。"
+    },
+    "scolding": {
+      "description": "责备、质问、要求住口或赶走对方。"
+    },
+    "shy": {
+      "description": "害羞、脸红或不好意思。"
+    },
+    "sleeping": {
+      "description": "睡觉、困倦、赖床或失眠。"
+    },
+    "smoking": {
+      "description": "抽烟、吸烟、吐烟或点烟。"
+    },
+    "speechless": {
+      "description": "无语、摊手、尴尬或不知道如何回应。"
+    },
+    "spinning": {
+      "description": "转圈、旋转、回旋或转晕。"
+    },
+    "sports": {
+      "description": "打球、跑步、锻炼或运动。"
+    },
+    "surprised": {
+      "description": "吃惊、震惊、目瞪口呆或不敢相信。"
+    },
+    "surrender": {
+      "description": "投降、认输或战败。"
+    },
+    "thinking": {
+      "description": "思考或考虑问题。"
+    },
+    "trapped": {
+      "description": "坐牢、被绑、被包围或无法脱身。"
+    },
+    "waiting": {
+      "description": "等待、期待或在车站等人。"
+    },
+    "waking": {
+      "description": "叫醒、起床或要求不要继续睡觉。"
+    },
+    "watching": {
+      "description": "盯着、探头、偷窥、看手机、看书或观察。"
+    },
+    "working": {
+      "description": "上班、加班、工作完成或制作内容。"
+    }
+  },
+  "extensions": {
+    "semantic": {
+      "version": 1,
+      "file": "semantic_metadata.json"
+    }
+  },
+  "homepage": "https://github.com/ifddis/feibi-meme-pack",
+  "source": {
+    "type": "github",
+    "repo": "ifddis/feibi-meme-pack",
+    "ref": "main",
+    "subpath": "."
+  },
+  "icon": "memes/hissing/b1becc9ca7edcb00bd11c1e03599d938055a029d74f624c2ce82d6f9cb20e51a.webp",
+  "previews": [
+    "memes/hissing/b1becc9ca7edcb00bd11c1e03599d938055a029d74f624c2ce82d6f9cb20e51a.webp",
+    "memes/punching/4d4d6f9c03fa6f829d12f02afc3aca6eaa7554658c727833dc279265b6a43264.webp",
+    "memes/angry/07628d8115c61d86241ec3375efc756863d627893e2e68ea96059654c2fa22ec.webp",
+    "memes/eating/d913ea0f7e6d8f14e89f654336d5b6ce5690429074df87310b01456cc7fa4f1c.webp",
+    "memes/happy/70cc4f902c6ceb6eb7056e8bac44ffa5b18d52c0ea030578009c33e4aacca80e.webp",
+    "memes/aggrieved/4ff3abe7add13e85153821ec74b88ca81267b2f350e0151ff91c43b1d2f87170.webp",
+    "memes/shy/2e6d89e58fcc57d332aa98055db7bbbb55ed892586a9977da731c38e5efbf98f.webp",
+    "memes/dancing/265109d4e155589400fae5b3b56ef9f67d9656fc12790e963b1dab3d17644c86.gif"
+  ]
+}

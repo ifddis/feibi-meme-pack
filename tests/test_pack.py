@@ -349,3 +349,74 @@ def test_malformed_cache_metadata_recovers_online(tmp_path, monkeypatch):
     )
     assert Downloader(tmp_path).fetch(BASE + "images/test.png") == b"new"
     assert Downloader(tmp_path, offline=True).fetch(BASE + "images/test.png") == b"new"
+
+
+@pytest.mark.parametrize(
+    "title,expected",
+    [
+        ("菲比哭哭", "aggrieved"),
+        ("呜呜呜", "aggrieved"),
+        ("气鼓鼓菲比", "angry"),
+        ("小拳拳菲比", "punching"),
+        ("菲比左勾拳", "punching"),
+        ("不好意思", "shy"),
+        ("不好意柿", "shy"),
+        ("菲比扭扭跳跳", "dancing"),
+        ("菲比炫面", "eating"),
+        ("干饭菲比_1", "eating"),
+        ("菲比比心", "affection"),
+        ("视频点头菲比", "approval"),
+        ("NO！NO！", "refusal"),
+        ("？菲比", "confused"),
+        ("牌没问题", "gaming"),
+        ("菲比舞枪", "combat"),
+        ("不许睡觉", "waking"),
+        ("菲比睡觉不老实", "sleeping"),
+        ("我不开心", "review"),
+        ("没有跳舞", "review"),
+        ("吃大福菲比", "eating"),
+        ("未命名1", "review"),
+        ("猫和老鼠系列10", "review"),
+        ("菲比", "review"),
+        ("打麻将哈哈", "gaming"),
+        ("异色哈哈", "review"),
+    ],
+)
+def test_meaningful_name_regressions(title, expected):
+    assert classify(record(title, "images/opaque-identifier.gif"))[0] == expected
+
+
+def test_partial_download_requires_explicit_opt_in(tmp_path, monkeypatch):
+    index = index_file(tmp_path, [record("哭哭", "images/missing.gif"), record("干饭")])
+
+    def fetch(self, url):
+        if "missing" in url:
+            raise requests.HTTPError("404 not found")
+        seed(self.cache, "images/test.png", image_bytes())
+        return image_bytes()
+
+    monkeypatch.setattr("feibi_pack.builder.Downloader.fetch", fetch)
+    with pytest.raises(requests.HTTPError):
+        build(index, tmp_path / "strict", tmp_path / "cache")
+    out = tmp_path / "partial"
+    result = build(index, out, tmp_path / "cache", skip_failed=True, complete_name_captions=True)
+    assert result["failed_assets"] == 1
+    assert result["images"] == 1
+    failures = json.loads((out / "download_failures.json").read_text("utf-8"))
+    assert failures[0]["stage"] == "download"
+    meta = json.loads((out / "semantic_metadata.json").read_text("utf-8"))
+    image = next(iter(meta["images"].values()))
+    assert image["category"] == "eating"
+    assert image["caption_status"] == "done"
+    assert "名称" in image["provenance"] or "标题" in image["provenance"]
+    assert validate_pack(out, True)["images"] == 1
+
+
+def test_invalid_image_is_reported_with_opt_in(tmp_path):
+    cache = tmp_path / "cache"
+    seed(cache, "images/test.png", b"not an image")
+    index = index_file(tmp_path, [record("开心")])
+    result = build(index, tmp_path / "pack", cache, offline=True, skip_failed=True)
+    assert result["images"] == 0 and result["failed_assets"] == 1
+    failures = json.loads((tmp_path / "pack/download_failures.json").read_text("utf-8"))
+    assert failures[0]["stage"] == "image-validation"

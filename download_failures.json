@@ -1,0 +1,24 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%93%87%E5%99%A2_1.jpg",
+    "error": "404 Client Error: Not Found for url: https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%93%87%E5%99%A2_1.jpg",
+    "stage": "download"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%97%AF..%E5%B0%B1%E8%BF%99%E7%82%B9%E7%A8%8B%E5%BA%A6%E5%90%97.webp",
+    "error": "404 Client Error: Not Found for url: https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%97%AF..%E5%B0%B1%E8%BF%99%E7%82%B9%E7%A8%8B%E5%BA%A6%E5%90%97.webp",
+    "stage": "download"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%97%AF%EF%BC%9F.webp",
+    "error": "404 Client Error: Not Found for url: https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E5%97%AF%EF%BC%9F.webp",
+    "stage": "download"
+  },
+  {
+    "urls": [
+      "https://raw.githubusercontent.com/Kato-Shoko705/Phoebe-Hub/main/images/%E6%A3%92%E7%90%83%E8%8F%B2%E6%AF%94.gif"
+    ],
+    "error": "cannot identify image file <image bytes>",
+    "stage": "image-validation"
+  }
+]
