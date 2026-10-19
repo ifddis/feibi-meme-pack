@@ -2,3 +2,13 @@ __pycache__/
 *.pyc
 *.part
 
+.venv/
+.cache/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+/manifest.json
+/semantic_metadata.json
+/memes/
