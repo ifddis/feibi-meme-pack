@@ -1,0 +1,28 @@
+name: Build and validate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.23"
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen ruff format --check .
+      - run: uv run --frozen pytest -q
+      - name: Offline build and protocol validation with generated images
+        run: uv run --frozen python scripts/smoke_fixture.py
+      # Deliberately no download of upstream images or artifact upload.
