@@ -155,3 +155,5 @@ GitHub Actions 在 Ubuntu 和 Windows 上执行同样的测试及离线 CLI 构�
 
 若最终使用 GitHub 导入，必须先得到图片再分发授权，再在单独审核流程中发布真正的内容包；
 导入参数应指向那个已发布包的仓库、ref 和包根目录，不能直接使用当前构建工具仓库。
+
+实际本地及 Windows/Ubuntu CI 验证结果、已知上游示例问题见 [VALIDATION.md](VALIDATION.md)。

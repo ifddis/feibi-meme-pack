@@ -17,10 +17,16 @@
 校验包括官方 manifest/semantic JSON Schema、真实文件、目录、图片格式、内容 SHA-256
 及 `content_sha256 + NUL + category + NUL + relative_path` 对应的条目身份。
 
+## GitHub Actions 双平台验证
+
+修复测试读取中文 JSON 时未显式指定 UTF-8 的 Windows 编码问题后，
+[Actions 运行 39301951615](https://github.com/ifddis/feibi-meme-pack/actions/runs/39301951615)
+在 Ubuntu 与 Windows 上均通过，包括 Python 安装、冻结依赖安装、Ruff、pytest、
+以及默认 PowerShell 下的实际 CLI 离线构建和完整协议校验。
+该运行对应实现提交 `787da833cd645cc11ec0b68011cfd946c067a67c`。
+
 ## 尚未验证
 
-- Windows PowerShell 实机执行：当前机器没有 Windows；已配置 Windows/Ubuntu Actions 矩阵，
-  需以远端实际运行结果为准。所有命令和路径处理均按跨平台设计。
 - 没有连接真实 AstrBot、meme_manager、QQ 或 DeepSeek，不能宣称集成成功。
 - 没有逐图视觉审核、OCR、全图库构建或再分发授权确认。
 
