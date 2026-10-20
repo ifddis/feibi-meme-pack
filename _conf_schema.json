@@ -1,0 +1,124 @@
+{
+  "mode": {
+    "description": "默认调度模式",
+    "type": "string",
+    "default": "random",
+    "hint": "random为随机间隔，fixed为固定间隔，daily为每天指定时刻；仅影响新绑定群。",
+    "options": [
+      "random",
+      "fixed",
+      "daily"
+    ]
+  },
+  "min_minutes": {
+    "description": "默认最小/固定间隔（分钟）",
+    "type": "int",
+    "default": 60,
+    "hint": "1..1440；固定模式使用此值。"
+  },
+  "max_minutes": {
+    "description": "默认最大间隔（分钟）",
+    "type": "int",
+    "default": 180,
+    "hint": "随机模式最大值；固定模式忽略此值。现有群请用指令修改间隔。"
+  },
+  "daily_limit": {
+    "description": "每群每日触发尝试上限",
+    "type": "int",
+    "default": 3,
+    "hint": "生成失败或发送结果不确定也计数，避免自动重试刷屏；手动触发同样计数。"
+  },
+  "active_start": {
+    "description": "允许发送的起始小时",
+    "type": "int",
+    "default": 9,
+    "hint": "0..23；支持跨午夜时段；起止相同表示全天。"
+  },
+  "active_end": {
+    "description": "允许发送的结束小时",
+    "type": "int",
+    "default": 23,
+    "hint": "0..24；结束时间不包含在允许时段中。"
+  },
+  "timezone": {
+    "description": "调度时区",
+    "type": "string",
+    "default": "Asia/Shanghai",
+    "hint": "例如 Asia/Shanghai；每日上限按该时区日期重置。"
+  },
+  "activity_minutes": {
+    "description": "近期活跃窗口（分钟）",
+    "type": "int",
+    "default": 0,
+    "hint": "0 为不要求最近活跃；例如120表示最近两小时必须收到过成员消息。"
+  },
+  "failure_limit": {
+    "description": "连续失败暂停阈值",
+    "type": "int",
+    "default": 3,
+    "hint": "连续失败达到阈值后关闭当前群任务，管理员检查后重新开启。"
+  },
+  "context_messages": {
+    "description": "生成文字时参考的最近消息数",
+    "type": "int",
+    "default": 20,
+    "hint": "0..50；只记录启用后实际接收的文本，最多保留7天。"
+  },
+  "chat_weight": {
+    "description": "随机聊天权重",
+    "type": "int",
+    "default": 50,
+    "hint": "权重非百分比；按可用行为的正权重归一化。"
+  },
+  "meme_weight": {
+    "description": "本地表情权重",
+    "type": "int",
+    "default": 30,
+    "hint": "无可用本地图片时不进入抽签池，不自动下载图片。"
+  },
+  "question_weight": {
+    "description": "轻松提问权重",
+    "type": "int",
+    "default": 20,
+    "hint": "权重为0时不选择该行为。"
+  },
+  "provider_id": {
+    "description": "聊天模型 Provider ID",
+    "type": "string",
+    "default": "",
+    "hint": "留空使用目标群当前模型，可继续使用已配置的DeepSeek；不另填密钥。"
+  },
+  "meme_pack_dir": {
+    "description": "本地表情包根目录",
+    "type": "string",
+    "default": "",
+    "hint": "含 manifest.json 和 memes/ 的目录；留空自动寻找 meme_manager/packs/ifddis.feibi-chibi。"
+  },
+  "meme_categories": {
+    "description": "可随机发送的表情分类",
+    "type": "list",
+    "default": [
+      "happy",
+      "cute",
+      "affection",
+      "dancing"
+    ],
+    "hint": "使用表情包的英文分类ID；只读取这些分类。"
+  },
+  "persona_prompt": {
+    "description": "随机文字的人设",
+    "type": "text",
+    "default": "你是菲比丘比群聊助手，语气自然可爱，简短，不冒充真实群成员。",
+    "hint": "仅用于本插件生成文字；不修改AstrBot原有人格。"
+  },
+  "daily_times": {
+    "description": "默认每日时刻",
+    "type": "list",
+    "default": [
+      "10:00",
+      "15:00",
+      "20:00"
+    ],
+    "hint": "daily模式使用，格式HH:MM，最多24项；已有群使用“随机事件 定时”命令修改。"
+  }
+}

@@ -1,0 +1,10 @@
+name: astrbot_plugin_random_events
+display_name: 菲比随机互动
+author: ifddis
+desc: 管理员控制的定时或随机群互动，支持文字、提问和本地菲比表情。
+version: 0.1.0
+astrbot_version: ">=4.29.1,<5"
+support_platforms:
+  - qq_official
+  - aiocqhttp
+repo: https://github.com/ifddis/feibi-meme-pack/tree/plugin-random-events

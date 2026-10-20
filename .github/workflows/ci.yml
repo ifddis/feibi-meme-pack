@@ -1,0 +1,32 @@
+name: Test plugin
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: astrbot_plugin_random_events
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.23"
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+        working-directory: astrbot_plugin_random_events
+      - run: uv run --frozen pytest -q
+        working-directory: astrbot_plugin_random_events
+      - run: uv run --frozen ruff check .
+        working-directory: astrbot_plugin_random_events
+      - run: uv run --frozen ruff format --check .
+        working-directory: astrbot_plugin_random_events
+      - run: uv run --frozen python scripts/build_release.py
+        working-directory: astrbot_plugin_random_events
